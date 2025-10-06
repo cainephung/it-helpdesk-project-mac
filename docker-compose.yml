@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  db:
+    image: mariadb:11
+    container_name: osticket-db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpass
+      MARIADB_DATABASE: osticket
+      MARIADB_USER: ticket
+      MARIADB_PASSWORD: ticketpass
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb -h127.0.0.1 -uroot -p$${MARIADB_ROOT_PASSWORD} -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
+
+  osticket:
+    image: tiredofit/osticket:latest   # multi-arch, PHP 8.x
+    container_name: osticket-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # --- Database (must match db service) ---
+      DB_HOST: db
+      DB_NAME: osticket
+      DB_USER: ticket
+      DB_PASS: ticketpass
+
+      # --- One-time installer ---
+      INSTALL_SECRET: "f91495bced61f6b3c7d349b4ed506dc0198af30420c57bda43033c643b9d4ddb"
+
+      # --- Admin bootstrap (REQUIRED: ADMIN_PASS) ---
+      ADMIN_FIRSTNAME: "Caine"
+      ADMIN_LASTNAME: "Phung"
+      ADMIN_EMAIL: "admin@example.com"
+      ADMIN_USER: "admin"
+      ADMIN_PASS: "ChangeMe_!234"
+
+      # --- Optional niceties ---
+      TIMEZONE: "America/Toronto"
+      PHP_MEMORY_LIMIT: "512M"
+      CONTAINER_ENABLE_MONITORING: "FALSE"
+      CONTAINER_ENABLE_MESSAGING: "FALSE"
+    ports:
+      - "8080:80"     # http://localhost:8080
+
+volumes:
+  db_data:
