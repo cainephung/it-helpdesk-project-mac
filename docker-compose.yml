@@ -6,10 +6,10 @@ services:
     container_name: osticket-db
     restart: unless-stopped
     environment:
-      MARIADB_ROOT_PASSWORD: rootpass
-      MARIADB_DATABASE: osticket
-      MARIADB_USER: ticket
-      MARIADB_PASSWORD: ticketpass
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
@@ -20,36 +20,29 @@ services:
       start_period: 60s
 
   osticket:
-    image: tiredofit/osticket:latest   # multi-arch, PHP 8.x
+    image: tiredofit/osticket:latest
     container_name: osticket-app
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
-      # --- Database (must match db service) ---
       DB_HOST: db
-      DB_NAME: osticket
-      DB_USER: ticket
-      DB_PASS: ticketpass
-
-      # --- One-time installer ---
-      INSTALL_SECRET: "f91495bced61f6b3c7d349b4ed506dc0198af30420c57bda43033c643b9d4ddb"
-
-      # --- Admin bootstrap (REQUIRED: ADMIN_PASS) ---
-      ADMIN_FIRSTNAME: "Caine"
-      ADMIN_LASTNAME: "Phung"
-      ADMIN_EMAIL: "admin@example.com"
-      ADMIN_USER: "admin"
-      ADMIN_PASS: "ChangeMe_!234"
-
-      # --- Optional niceties ---
-      TIMEZONE: "America/Toronto"
-      PHP_MEMORY_LIMIT: "512M"
-      CONTAINER_ENABLE_MONITORING: "FALSE"
-      CONTAINER_ENABLE_MESSAGING: "FALSE"
+      DB_NAME: ${MARIADB_DATABASE}
+      DB_USER: ${MARIADB_USER}
+      DB_PASS: ${MARIADB_PASSWORD}
+      INSTALL_SECRET: ${INSTALL_SECRET}
+      ADMIN_FIRSTNAME: ${ADMIN_FIRSTNAME}
+      ADMIN_LASTNAME: ${ADMIN_LASTNAME}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_USER: ${ADMIN_USER}
+      ADMIN_PASS: ${ADMIN_PASS}
+      TIMEZONE: ${TIMEZONE}
+      PHP_MEMORY_LIMIT: ${PHP_MEMORY_LIMIT}
+      CONTAINER_ENABLE_MONITORING: ${CONTAINER_ENABLE_MONITORING}
+      CONTAINER_ENABLE_MESSAGING: ${CONTAINER_ENABLE_MESSAGING}
     ports:
-      - "8080:80"     # http://localhost:8080
+      - "8080:80"
 
 volumes:
   db_data:
